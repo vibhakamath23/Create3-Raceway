@@ -39,12 +39,8 @@ ROTATE ANGLE ACTION CLIENT CLASS
 Subclass of Node Class
 '''
 
-runAgain = True 
-
 class RotateAngleActionClient(Node):
-
-    global runAgain
-
+    
     # Define a method to initialize the node
     def __init__(self):
 
@@ -117,7 +113,6 @@ class RotateAngleActionClient(Node):
         self.get_logger().info('Received rotation feedback: {0}')
         #.format(feedback_msg.feedback.current_angle)
 
-
 '''
 MOVE PUBLISHER
 These statements import Twist messages to send to /cmd_vel
@@ -131,15 +126,11 @@ angular = 0
 class MovePublisher(Node):
     global linear
     global angular
-     #This class let's us create nodes
 
     def __init__(self):
         #creating the node
         super().__init__('moving')
 
-        # Creates a publisher based on the message type "Vector3" that has been imported from the std_msgs module above
-        # Sets the publisher to publish on the 'my_publisher' topic
-        # Sets a queue size of 10 - essentially a backlog of messages if the subscriber isn't receiving them fast enough
         self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
 
         # Set delay in seconds
@@ -154,7 +145,7 @@ class MovePublisher(Node):
      def timer_callback(self):
         dist = measure_distance()
         print(dist)
-        if distance > 12:
+        if distance > 12: # no object is being seen, go straight
             msg = Twist()
             msg.linear.x = 0.2
             msg.angular.z = 0.0
@@ -162,7 +153,7 @@ class MovePublisher(Node):
             self.get_logger().info(f'Publishing: "{msg.linear.x}"')
             Straight = True
             print(counter)
-        else:
+        else: # stop and call rotation
             msg.linear.x = float(0)
             msg.angular.z = float(0)
             self.publisher.publish(msg) 
@@ -171,40 +162,33 @@ class MovePublisher(Node):
             self.rotation()
 
 
-    def rotation(self):
+    def rotation(self, rotate_client):
+        try:
+            info = DetermineObject.ObjectAndLevel()
+            thing = info[0] 
+            thing = thing.replace('\n', '')
+            confidence = int(info[1])
+            
+            if (confidence > 97): # it's seeing an object
+                print("Object confirmed! Moving...")
+                if (thing == "Bear"):
+                    ClassOne_Bear(rotate_client)
+                elif (thing == "Darth Vader"):
+                    ClassTwo_Vader(rotate_client)
+                elif (thing == "Elephant"):
+                    ClassThree_Elephant(rotate_client)
+                elif (thing == "Kiwi"):
+                    ClassFour_Kiwi(rotate_client)
+                elif (thing == "Mario"):
+                    ClassFive_Mario(rotate_client)
+                elif (thing == "Mug"): 
+                    ClassSix_Mug(rotate_client)
+                elif (thing == "Rubik's Cube"):
+                    print("It's the Cube!")
+                    ClassSeven_Cube
+                    print("Called Cube function!")
+            return
 
-        rclpy.init(args=args)
-        rotate_client = RotateAngleActionClient()
-        moving = MovePublisher()
- 
-        while True:
-
-            try:
-                info = DetermineObject.ObjectAndLevel()
-                thing = info[0] 
-                thing = thing.replace('\n', '')
-                confidence = int(info[1])
-                
-                if (confidence > 97): # it's seeing an object
-                    print("Object confirmed! Moving...")
-                    if (thing == "Bear"):
-                        ClassOne_Bear(rotate_client)
-                    elif (thing == "Darth Vader"):
-                        ClassTwo_Vader(rotate_client)
-                    elif (thing == "Elephant"):
-                        ClassThree_Elephant(rotate_client)
-                    elif (thing == "Kiwi"):
-                        ClassFour_Kiwi(rotate_client)
-                    elif (thing == "Mario"):
-                        ClassFive_Mario(rotate_client)
-                    elif (thing == "Mug"): 
-                        ClassSix_Mug(rotate_client)
-                    elif (thing == "Rubik's Cube"):
-                        print("It's the Cube!")
-                        ClassSeven_Cube
-                        print("Called Cube function!")
-
-   
 '''
 MOVEMENT FUNCTIONS
 Called in the get_data() function, these change either the linear and angular 
@@ -252,29 +236,9 @@ def ClassEight_Empty(rotate_client):
 
 
 '''
-MOVEMENT AND ROTATION FUNCTIONS
-Functions to actually send goals to the Create 3.
+ROTATION FUNCTION
+Function to actually send goals to the Create 3.
 '''
-
-def Move(args=None):
-    
-    global linear
-    global angular
-
-    rclpy.init(args=args)
-
-    try:
-        moving = MovePublisher()
-        rclpy.spin(moving)
-
-    except KeyboardInterrupt:
-        print('Keyboard Interrupt')
-
-    finally:
-        #move_publisher.reset()
-        moving.destroy_node()
-        rclpy.shutdown()
-
 
 def Rotate(angle, max_rotation_speed, rotate_client, args=None):
     global runAgain
@@ -334,7 +298,7 @@ def main(args=None):
     while True:
 
         try:
-            moving.timer_callback() # will go straight if distance > 12 
+            moving.timer_callback(rotate_client) # will go straight if distance > 12 
 
         except KeyboardInterrupt:
             print(Interrupt)
