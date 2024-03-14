@@ -1,0 +1,8 @@
+0 Bear
+1 Darth Vader
+2 Elephant
+3 Kiwi
+4 Mario
+5 Mug
+6 Rubiks Cube
+7 Empty
