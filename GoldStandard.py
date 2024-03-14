@@ -13,9 +13,6 @@ import random
 import time
 import DetermineObject
 
-linear = 0
-angular = 0
-
 '''
 Ultrasonic Sensor Setup
 '''
